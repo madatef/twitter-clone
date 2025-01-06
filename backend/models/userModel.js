@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+
+// create a user schema to define what data a typical user has
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
@@ -54,7 +56,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
-},{timestamps: true});
+},{timestamps: true} );    // get the joining date
 
 const User = mongoose.model("User", userSchema);
 export default User;

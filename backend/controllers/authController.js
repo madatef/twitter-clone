@@ -6,6 +6,7 @@ export const signup = async (req, res) => {
     try {
         const { username, fullname, email, password } = req.body;
 
+        // make sure the email has the right format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.status(400).json(
@@ -14,6 +15,8 @@ export const signup = async (req, res) => {
                 }
             );
         }
+
+        // check that the credentials are unique
         const existingEmail = await User.findOne({ email });
         if (existingEmail) {
             return res.status(400).json(
@@ -22,7 +25,6 @@ export const signup = async (req, res) => {
                 }
             );
         }
-
 
         const existingUser = await User.findOne({ username });
         if (existingUser) {
@@ -33,6 +35,7 @@ export const signup = async (req, res) => {
             );
         }
 
+        // enforce password length
         if (password.length < 6) {
             return res.status(400).json(
                 {
@@ -50,8 +53,10 @@ export const signup = async (req, res) => {
             email, 
             password: hashedPassword
         });
+
+        // generate access token and save user
         if (newUser) {
-            generateTokenAndSetCookie(res, newUser._id);
+            generateTokenAndSetCookie(res, newUser._id);  // access token to prevent CSRF attacks 
             await newUser.save();
             res.status(201).send("user created successfully");
         } else {
@@ -79,9 +84,10 @@ export const login = async (req, res) => {
         const { username, password } = req.body;
         const user = await User.findOne({username});
         if (user) {
-            const validPassword = await bcrypt.compare(password, user?.password || "");
+            // authenticate user
+            const validPassword = await bcrypt.compare(password, user?.password || ""); 
             if (validPassword) {
-                generateTokenAndSetCookie(res, user._id);
+                generateTokenAndSetCookie(res, user._id); // prevent CSRF attacks
                 res.status(200).json(
                     {
                         _id: user._id,
@@ -126,6 +132,7 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
+        // remove any existing access token cookies
         res.clearCookie("token");
         res.status(200).send("Logged out successfully");
     } catch(error) {

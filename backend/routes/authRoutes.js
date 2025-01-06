@@ -5,6 +5,8 @@ import { protectRoute } from "../middleware/protectRoute.js";
 
 const router = express.Router();
 
+// getMe returns the logged in user data and
+// protectRoute is a middleware function to protect this route
 router.get("/me", protectRoute, getMe);
 
 router.post("/signup", signup);

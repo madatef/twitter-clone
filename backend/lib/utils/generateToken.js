@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 
 
+
+// generate access token to prevent CSRF attacks
 export const generateTokenAndSetCookie = (res, id) => {
     const token = jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "15d" });
     res.cookie("token", token, {
