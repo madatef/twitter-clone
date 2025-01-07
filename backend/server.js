@@ -10,6 +10,7 @@ import {v2 as cloudinary} from "cloudinary";
 import authRoutes from "./routes/authRoutes.js"
 import userRoutes from "./routes/userRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
+import notifyRoutes from "./routes/notifyRoutes.js";
 
 // utils 
 import connectDB from "./db/connectMongoDB.js";
@@ -32,7 +33,10 @@ app.use(cookieParser())
 // authentication and authorizatin routes
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
+
+// interaction routes
 app.use("/posts", postRoutes);
+app.use("/notify", notifyRoutes);
 
 
 
