@@ -1,7 +1,6 @@
 import express from 'express';
 import { protectRoute } from '../middleware/protectRoute.js';
 import { followUserSwitch, getSuggestions, getUserProfile, updateProfile } from '../controllers/usersController.js';
-import { get } from 'mongoose';
 
 
 const router = express.Router();

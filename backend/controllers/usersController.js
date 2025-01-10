@@ -1,11 +1,13 @@
-import User from "../models/userModel";
+import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import {v2 as cloudinary} from "cloudinary";
+import Notification from "../models/notifyModel.js";
 
 
 export const getUserProfile = async (req, res) => {
     try {
         const { username } = req.params;
+        console.log(username);
         const user = await User.findOne({ username }).select("-password");
         if (!user) {
             return res.status(404).json({ error: "User not found" });
@@ -48,10 +50,10 @@ export const followUserSwitch = async (req, res) => {
             });
             await notification.save();
 
+            res.status(200).json({ currUser });
         }
         await currUser.save();
         await followUser.save();
-        res.status(200).json({ currUser });
     }
     catch (error) {
         console.error(`error in followUserSwitch: ${error}`);
@@ -70,7 +72,7 @@ export const getSuggestions = async (req, res) => {
           })
           .select("-password")
           .limit(5);
-        res.status(200).json({ suggestions });
+        res.status(200).json(suggestions);
     }
     catch (error) {
         console.error(`error in getSuggestions: ${error}`);
@@ -131,7 +133,7 @@ export const updateProfile = async (req, res) => {
         res.status(200).json({ user });
     }
     catch (error) {
-        console.error(`error in updateProfile: ${error}`);
+        console.log(`error in updateProfile: ${error.message}`);
         res.status(500).json({ error: "Internal server error" });
     }
 }

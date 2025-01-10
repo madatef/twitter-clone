@@ -2,6 +2,7 @@
 import express from "express";
 import dotenv from "dotenv"
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 // Custom modules
 import {v2 as cloudinary} from "cloudinary";
@@ -24,9 +25,15 @@ cloudinary.config({
 
 const app = express();
 // parse req.body as json
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
+// allow cross origin requests
+app.use(cors({
+    origin: 'http://localhost:3000', // Allow only this origin
+    methods: ['GET', 'POST', 'DELETE', 'UPDATE'], // Allow only specific HTTP methods
+    credentials: true, // Allow cookies
+}));
 // parse form and url encoded data
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 // parse cookies to athenticate and authorize users
 app.use(cookieParser())
 

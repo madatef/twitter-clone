@@ -1,7 +1,7 @@
-import User from "../models/userModel";
+import User from "../models/userModel.js";
 import {v2 as cloudinary} from "cloudinary";
-import Post from "../models/postModel";
-import Notification from "../models/notifyModel";
+import Post from "../models/postModel.js";
+import Notification from "../models/notifyModel.js";
 
 
 export const getPosts = async (req, res) => {
@@ -40,8 +40,8 @@ export const getFollowingPosts = async (req, res) => {
 
 export const getUserPosts = async (req, res) => {
     try {
-        const {username} = req.params.username;
-        const user = await User.fineOne({username});
+        const {username} = req.params;
+        const user = await User.findOne({username});
         if (!user) {
             return res.status(404).json({error: "User not found"});
         }
@@ -84,9 +84,10 @@ export const getLikedPosts = async (req, res) => {
 
 export const createPost = async (req, res) => {
     try {
+        console.log(req.user);
         const { text } = req.body;
         let { image } = req.body;
-        const userId = req.user._id.toString();
+        const userId = req.user._id;
 
         const postCreator = await User.findById(userId);
         if(!postCreator) {
@@ -100,10 +101,11 @@ export const createPost = async (req, res) => {
                 upload_preset: "social_media"
             });
             image = uploadedImage.secure_url;
+            console.log(image);
         }
 
         const newPost = {
-            userId,
+            user: userId,
             text,
             image
         }
@@ -122,27 +124,33 @@ export const likePostSwitch = async (req, res) => {
 
         const post = await Post.findById(postId);
         if(!post) {
-            return res.status(400).json({message: "Post not found"});
+            return res.status(404).json({message: "Post not found"});
         }
 
         const isLiked = post.likes.includes(userId);
         if(isLiked) {
             await Post.updateOne({_id: postId}, {$pull: {likes: userId}});
             await User.updateOne({_id: userId}, {$pull: {likedPosts: postId}});
+            const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
+			res.status(200).json(updatedLikes);
         } else {
-            post.likes.push(userId);
+            await Post.updateOne({_id: postId}, {$push: {likes: userId}});
             await User.updateOne({_id: userId}, {$push: {likedPosts: postId}});
-            await post.save();
             // send notification to the post creator
-            const notification = new Notification({
-                sender: userId,
-                receiver: post.userId,
-                type: "like"
-            });
+            if (post.user._id.toString() !== userId.toString()) {
+                const notification = new Notification({
+                    sender: userId,
+                    receiver: post.user,
+                    type: "like"
+                });
+                await Notification.create(notification);
+            }
+            const updatedLikes = post.likes;
+			res.status(200).json(updatedLikes);
         }
 
-        res.status(200).json(post);
     } catch (error) {
+        console.log(`error in likePostSwitch: ${error.message}`)
         res.status(500).json({error: "Internal server error"});
     }
 }
@@ -171,11 +179,14 @@ export const addComment = async (req, res) => {
         res.status(200).json(post);
 
         // send notification to the post creator
-        const notification = new Notification({
-            sender: userId,
-            receiver: post.userId,
-            type: "comment"
-        });
+        if (post.user._id.toString() !== userId.toString()) {
+            const notification = new Notification({
+                sender: userId,
+                receiver: post.user,
+                type: "comment"
+            });
+            await Notification.create(notification);
+        }
 
     } catch (error) {
         console.log(`error in addComment: ${error}`);
@@ -185,7 +196,7 @@ export const addComment = async (req, res) => {
 
 export const deletePost = async (req, res) => {
     try {
-        const { postId } = req.params.id;
+        const postId  = req.params.id;
         const userId = req.user._id;
 
         const post = await Post.findById(postId);
@@ -193,7 +204,7 @@ export const deletePost = async (req, res) => {
             return res.status(400).json({message: "Post not found"});
         }
 
-        if(post.userId.toString() !== userId.toString()) {
+        if(post.user.toString() !== userId.toString()) {
             return res.status(401).json({message: "Unauthorized"});
         }
         if (post.image) {
@@ -201,9 +212,10 @@ export const deletePost = async (req, res) => {
             await cloudinary.uploader.destroy(publicId);
         }
 
-        await post.remove();
+        await Post.deleteOne({_id: postId});
         res.status(200).json({message: "Post deleted"});
     } catch (error) {
+        console.log(error);
         res.status(500).json({error: "Internal server error"});
     }
 }

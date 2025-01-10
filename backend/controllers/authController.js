@@ -132,9 +132,16 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
+        if(!req.cookies.token) {
+            return res.status(400).json(
+                {
+                    error: "You are not logged in"
+                }
+            );
+        }
         // remove any existing access token cookies
         res.clearCookie("token");
-        res.status(200).send("Logged out successfully");
+        res.status(200).json({msg: "Logged out successfully"});
     } catch(error) {
         console.log(`Error in logout controller:  ${error.message}`);
         console.error(`Couldn't connect to database: ${error.message}`);
@@ -152,7 +159,7 @@ export const getMe = async (req, res) => {
         if (user) {
             res.status(200).json(
                 {
-                    data: user
+                    user
                 }
             );
         } else {

@@ -1,4 +1,4 @@
-import Notification from "../models/notifyModel";
+import Notification from "../models/notifyModel.js";
 
 
 
