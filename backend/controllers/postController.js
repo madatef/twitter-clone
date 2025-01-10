@@ -122,7 +122,7 @@ export const likePostSwitch = async (req, res) => {
         const postId = req.params.id;
         const userId = req.user._id;
 
-        const post = await Post.findById(postId);
+        let post = await Post.findById(postId);
         if(!post) {
             return res.status(404).json({message: "Post not found"});
         }
@@ -130,11 +130,13 @@ export const likePostSwitch = async (req, res) => {
         const isLiked = post.likes.includes(userId);
         if(isLiked) {
             await Post.updateOne({_id: postId}, {$pull: {likes: userId}});
+            post = await Post.findById(postId);
             await User.updateOne({_id: userId}, {$pull: {likedPosts: postId}});
             const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
 			res.status(200).json(updatedLikes);
         } else {
             await Post.updateOne({_id: postId}, {$push: {likes: userId}});
+            post = await Post.findById(postId);
             await User.updateOne({_id: userId}, {$push: {likedPosts: postId}});
             // send notification to the post creator
             if (post.user._id.toString() !== userId.toString()) {

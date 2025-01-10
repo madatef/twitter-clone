@@ -16,8 +16,7 @@ const Post = ({post}) => {
 	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 	const queryClient = useQueryClient();
 	const postOwner = post.user;
-	const isLiked = authUser?.user.likedPosts.includes(post._id);
-
+	const [isLiked, setIsLiked] = useState(post.likes.includes(authUser?.user._id));
 	const isMyPost = authUser.user._id === post.user._id;
 
 	const formattedDate = formatPostDate(post.createdAt);
@@ -45,7 +44,7 @@ const Post = ({post}) => {
 		},
 	});
 
-	const { mutate: likePost, isPending: isLiking } = useMutation({
+	const { mutateAsync: likePost, isPending: isLiking } = useMutation({
 		mutationFn: async () => {
 			try {
 				const res = await fetch(`http://localhost:3500/posts/like/${post._id}`, {
@@ -62,14 +61,12 @@ const Post = ({post}) => {
 			}
 		},
 		onSuccess: (updatedLikes) => {
-			// this is not the best UX, bc it will refetch all posts
-			// queryClient.invalidateQueries({ queryKey: ["posts"] });
 
-			// instead, update the cache directly for that post
+			// instead of invalidating the query for all posts, 
+			// update the cache directly for that post only (better UX)
 			queryClient.setQueryData(["posts"], (oldData) => {
 				return  oldData.map((p) => {
 					if (p._id.toString() === post._id.toString()) {
-						console.log(p);
 						return { ...p, likes: updatedLikes };
 					}
 					return p;
@@ -122,8 +119,12 @@ const Post = ({post}) => {
 	};
 
 	const handleLikePost = () => {
-		if (isLiking) return;
-		likePost();
+		try {
+			likePost();
+			setIsLiked(!isLiked);
+		} catch (error) {
+			console.error('Error liking post:', error);
+		} 
 	};
 
 	return (
@@ -238,13 +239,13 @@ const Post = ({post}) => {
 									<FaHeart className='w-4 h-4 cursor-pointer text-pink-500 ' />
 								)}
 
-								<span
+								{! isLiking && (<span
 									className={`text-sm  group-hover:text-pink-500 ${
-										isLiked ? "text-pink-500" : "text-slate-500"
+										isLiked  ? "text-pink-500" : "text-slate-500"
 									}`}
 								>
 									{post.likes.length}
-								</span>
+								</span>)}
 							</div>
 						</div>
 						<div className='flex w-1/3 justify-end gap-2 items-center'>
