@@ -7,7 +7,7 @@ const EditProfileModal = ({ authUser }) => {
 		username: "",
 		email: "",
 		bio: "",
-		link: "",
+		website: "",
 		newPassword: "",
 		currentPassword: "",
 	});
@@ -21,11 +21,11 @@ const EditProfileModal = ({ authUser }) => {
 	useEffect(() => {
 		if (authUser) {
 			setFormData({
-				fullName: authUser.fullName,
+				fullName: authUser.fullname,
 				username: authUser.username,
 				email: authUser.email,
 				bio: authUser.bio,
-				link: authUser.link,
+				website: authUser.website,
 				newPassword: "",
 				currentPassword: "",
 			});
@@ -105,10 +105,10 @@ const EditProfileModal = ({ authUser }) => {
 						</div>
 						<input
 							type='text'
-							placeholder='Link'
+							placeholder='website'
 							className='flex-1 input border border-gray-700 rounded p-2 input-md'
-							value={formData.link}
-							name='link'
+							value={formData.website}
+							name='website'
 							onChange={handleInputChange}
 						/>
 						<button className='btn btn-primary rounded-full btn-sm text-white'>

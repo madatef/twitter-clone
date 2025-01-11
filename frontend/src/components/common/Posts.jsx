@@ -2,6 +2,7 @@ import Post from "./Post";
 import PostSkeleton from "../skeletons/PostSkeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { BiRepost } from "react-icons/bi";
 
 const Posts = ({ feedType, username, userId }) => {
 	const getPostEndpoint = () => {
@@ -68,7 +69,17 @@ const Posts = ({ feedType, username, userId }) => {
 			{!isLoading && !isRefetching && posts && (
 				<div>
 					{posts.map((post) => (
-						<Post key={post._id} post={post} />
+						<div key={post._id}>
+							<div className="flex gap-1 flex-row ">
+								{post.retweetStatus.isRetweet && (
+									<div key={post._id} className='h-6 text-center m-0 pl-6 text-slate-700'>
+										<BiRepost  className="w-6 h-6 m-2 inline-block"/> 
+										{post.retweetStatus.retweeter.username} reposted
+									</div>
+								)}
+							</div>
+							<Post post={post} />
+						</div>
 					))}
 				</div>
 			)}

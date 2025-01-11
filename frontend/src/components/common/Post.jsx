@@ -17,6 +17,7 @@ const Post = ({post}) => {
 	const queryClient = useQueryClient();
 	const postOwner = post.user;
 	const [isLiked, setIsLiked] = useState(post.likes.includes(authUser?.user._id));
+	const [isRetweeted, setIsRetweeted] = useState(post.retweets?.includes(authUser?.user._id));
 	const isMyPost = authUser.user._id === post.user._id;
 
 	const formattedDate = formatPostDate(post.createdAt);
@@ -77,6 +78,39 @@ const Post = ({post}) => {
 			toast.error(error.message);
 		},
 	});
+	const { mutateAsync: retweetPost, isPending: isRetweeting } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch(`http://localhost:3500/posts/retweet/${post._id}`, {
+					method: "POST",
+					credentials: "include"
+				});
+				const data = await res.json();
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+				return data;
+			} catch (error) {
+				throw new Error(error);
+			}
+		},
+		onSuccess: (updatedRetweets) => {
+
+			// instead of invalidating the query for all posts, 
+			// update the cache directly for that post only (better UX)
+			queryClient.setQueryData(["posts"], (oldData) => {
+				return  oldData.map((p) => {
+					if (p._id.toString() === post._id.toString()) {
+						return { ...p, retweets: updatedRetweets };
+					}
+					return p;
+				});
+			});
+		},
+		onError: (error) => {
+			toast.error(error.message);
+		},
+	});
 
 	const { mutate: commentPost, isPending: isCommenting } = useMutation({
 		mutationFn: async () => {
@@ -126,17 +160,25 @@ const Post = ({post}) => {
 			console.error('Error liking post:', error);
 		} 
 	};
+	const handleRetweetPost = () => {
+		try {
+			retweetPost();
+			setIsRetweeted(!isRetweeted);
+		} catch (error) {
+			console.error('Error retweeting post:', error);
+		} 
+	};
 
 	return (
 		<>
-			<div className='flex gap-2 items-start p-4 border-b border-gray-700'>
+			<div className='flex gap-2 items-start align-top p-4 border-b border-gray-700'>
 				<div className='avatar'>
 					<Link to={`/profile/${postOwner.username}`} className='w-8 rounded-full overflow-hidden'>
 						<img src={postOwner.profilePicture || "/avatar-placeholder.png"} />
 					</Link>
 				</div>
 				<div className='flex flex-col flex-1'>
-					<div className='flex gap-2 items-center'>
+					<div className='flex gap-2 items-center m-0 p-0'>
 						<Link to={`/profile/${postOwner.username}`} className='font-bold'>
 							{postOwner.fullname}
 						</Link>
@@ -226,9 +268,22 @@ const Post = ({post}) => {
 									<button className='outline-none'>close</button>
 								</form>
 							</dialog>
-							<div className='flex gap-1 items-center group cursor-pointer'>
-								<BiRepost className='w-6 h-6  text-slate-500 group-hover:text-green-500' />
-								<span className='text-sm text-slate-500 group-hover:text-green-500'>0</span>
+							<div className='flex gap-1 items-center group cursor-pointer' onClick={handleRetweetPost}>
+								{isRetweeting && <LoadingSpinner size='sm' />}
+								{!isRetweeted && !isRetweeting && (
+									<BiRepost className='w-6 h-6 cursor-pointer text-slate-500 group-hover:text-green-500' />
+								)}
+								{isRetweeted && !isRetweeting && (
+									<BiRepost className='w-6 h-6 cursor-pointer text-green-500 ' />
+								)}
+
+								{!isRetweeting && (<span
+									className={`text-sm  group-hover:text-green-500 ${
+										isRetweeted  ? "text-green-500" : "text-slate-500"
+									}`}
+								>
+									{post.retweets.length}
+								</span>)}
 							</div>
 							<div className='flex gap-1 items-center group cursor-pointer' onClick={handleLikePost}>
 								{isLiking && <LoadingSpinner size='sm' />}

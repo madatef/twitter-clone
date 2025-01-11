@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
+import { BiRepost } from "react-icons/bi";
+
 
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
@@ -80,6 +82,7 @@ const NotificationPage = () => {
 							{notification.type === "follow" && <FaRegUser className='w-7 h-7 text-primary' />}
 							{notification.type === "like" && <FaHeart className='w-7 h-7 text-red-500' />}
 							{notification.type === "comment" && <FaRegComment className='w-7 h-7 text-green-500' />}
+							{notification.type === "retweet" && <BiRepost className='w-9 h-9 text-green-500' />}
 							<Link to={`/profile/${notification.sender.username}`}>
 								<div className='avatar'>
 									<div className='w-8 rounded-full'>
@@ -88,7 +91,7 @@ const NotificationPage = () => {
 								</div>
 								<div className='flex gap-1'>
 									<span className='font-bold'>@{notification.sender.username}</span>{" "}
-									{notification.type === "follow" ? "followed you" : notification.type === "like" ? "liked your post" : "commented on your post"}
+									{notification.type === "follow" ? "followed you" : notification.type === "like" ? "liked your post" : notification.type === "comment" ?  "commented on your post" : "retweeted your post"}	
 								</div>
 							</Link>
 						</div>

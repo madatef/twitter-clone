@@ -20,6 +20,29 @@ const postSchema = new mongoose.Schema(
                 default: [],
             }
 		],
+		retweets: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+                default: [],
+            }
+		],
+		retweetStatus: {
+			isRetweet: {
+				type: Boolean,
+				default: false,
+			},
+			op: {
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "Post",
+				default: null,
+			},
+			retweeter:{
+					type: mongoose.Schema.Types.ObjectId,
+					ref: "User",
+					default: null,
+				},
+		},
 		comments: [
 			{
 				text: {

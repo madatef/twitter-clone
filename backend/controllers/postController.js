@@ -19,7 +19,6 @@ export const getPosts = async (req, res) => {
 
 export const getFollowingPosts = async (req, res) => {
     try {
-        const userId = req.user._id;
         const user = req.user;
         if (!user) {
             res.status(400).json({error: "User not found"});
@@ -27,10 +26,32 @@ export const getFollowingPosts = async (req, res) => {
         if (!user.following.length) {
             return res.status(200).json([]);
         }
-        const followingPosts = await Post.find({user: {$in: user.following}})
-        .sort({createdAt: -1})
-        .populate({path: "user", select: "-password"})
-        .populate({path: "comments.user", select: "-password"});
+
+        const userPosts = await Post.find({user: user.following}).populate({
+            path: "user",
+            select: "-password"
+        })
+        .populate({
+            path: "comments.user",
+            select: "-password"
+        });
+
+
+        const userRetweets = await Post.find({retweetStatus: {retweeter: user._id}}).populate({
+            path: "user",
+            select: "-password"
+        })
+        .populate({
+            path: "comments.user",
+            select: "-password"
+        })
+        .populate({
+            path: "retweetStatus.retweeter",
+            select: "username"
+        });
+
+
+    const followingPosts =[...userPosts, ...userRetweets].sort((a, b) => b.createdAt - a.createdAt);
         res.status(200).json(followingPosts);
     } catch (error) {
         console.log(`error in getFollowingPosts: ${error}`);
@@ -45,16 +66,36 @@ export const getUserPosts = async (req, res) => {
         if (!user) {
             return res.status(404).json({error: "User not found"});
         }
-        const posts = await Post.find({user: user._id})
-        .sort({createdAt: -1})
-        .populate({
+
+
+        const userPosts = await Post.find({user: user._id}).populate({
             path: "user",
             select: "-password"
         })
         .populate({
             path: "comments.user",
             select: "-password"
+        })
+        .populate({
+            path: "retweetStatus.retweeter",
+            select: "username"
         });
+
+
+        const userRetweets = await Post.find({retweetStatus: {retweeter: user._id}}).populate({
+            path: "user",
+            select: "-password"
+        })
+        .populate({
+            path: "comments.user",
+            select: "-password"
+        })
+        .populate({
+            path: "retweetStatus.retweeter",
+            select: "username"
+        });
+        const posts = [...userPosts, ...userRetweets].sort((a, b) => b.createdAt - a.createdAt);
+        
         
         if (!posts) {
             return res.status(200).josn([]);
@@ -62,7 +103,7 @@ export const getUserPosts = async (req, res) => {
         res.status(200).json(posts);
 
     } catch (error) {
-        console.log(`error in getUsrePosts: ${error.message}`)
+        console.log(`error in getUsrePosts: ${error}`)
         res.status(500).json({error: "Internal server error"});
     }
 }
@@ -153,6 +194,80 @@ export const likePostSwitch = async (req, res) => {
 
     } catch (error) {
         console.log(`error in likePostSwitch: ${error.message}`)
+        res.status(500).json({error: "Internal server error"});
+    }
+}
+
+export const retweetPost = async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const userId = req.user._id;
+
+        let post = await Post.findById(postId);
+        if(!post) {
+            return res.status(404).json({message: "Post not found"});
+        }
+
+        const isRetweeted = post.retweets.includes(userId);
+        if(isRetweeted) {
+            if (!post.retweetStatus.isRetweet) {
+                await Post.deleteOne({retweetStatus: {isRetweet: true, op: post._id, retweeter: userId}});
+                await Post.updateOne({_id: postId}, {$pull: {retweets: userId}});
+                post = await Post.findById(postId);
+            } else {
+                await Post.deleteOne({retweetStatus: {isRetweet: true, op: post.retweetStatus.op, retweeter: userId}});
+                await Post.updateOne({_id: post.retweetStatus.op}, {$pull: {retweets: userId}});
+                post = await Post.findById(post.retweetStatus.op);
+            }
+            const updatedRetweets = post.retweets.filter((id) => id.toString() !== userId.toString());
+            res.status(200).json(updatedRetweets);
+        } 
+        else {
+            if (!post.retweetStatus.isRetweet) {
+                await Post.updateOne({_id: postId}, {$push: {retweets: userId}});
+                post = await Post.findById(postId);
+                const rtpost = {
+                    user: post.user, 
+                    text: post.text, 
+                    image: post.image,
+                    likes: post.likes,
+                    comments: post.comments,
+                    retweets: post.retweets,
+                    retweetStatus: {isRetweet: true, op: post._id, retweeter: userId}
+                };
+                await Post.create(rtpost);
+                const updatedRetweets = post.retweets;
+                res.status(200).json(updatedRetweets);
+            } else {
+                await Post.updateOne({_id: post.retweetStatus.op}, {$push: {retweets: userId}});
+                await Post.updateOne({_id: postId}, {$push: {retweets: userId}});
+                post = await Post.findById(post.retweetStatus.op);
+                const rtpost = {
+                    user: post.user, 
+                    text: post.text, 
+                    image: post.image,
+                    likes: post.likes,
+                    comments: post.comments,
+                    retweets: post.retweets,
+                    retweetStatus: {isRetweet: true, op: post._id, retweeter: userId}
+                };
+                await Post.create(rtpost);
+                const updatedRetweets = post.retweets;
+                res.status(200).json(updatedRetweets);
+            }
+        }
+
+        // send notification to the post creator
+        if (post.user._id.toString() !== userId.toString()) {
+            const notification = new Notification({
+                sender: userId,
+                receiver: post.user,
+                type: "retweet"
+            });
+            await Notification.create(notification);
+        }
+    } catch (error) {
+        console.log(`error in retweetPost: ${error}`);
         res.status(500).json({error: "Internal server error"});
     }
 }
