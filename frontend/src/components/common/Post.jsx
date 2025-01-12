@@ -25,7 +25,7 @@ const Post = ({post}) => {
 	const { mutate: deletePost, isPending: isDeleting } = useMutation({
 		mutationFn: async () => {
 			try {
-				const res = await fetch(`http://localhost:3500/posts/${post._id}`, {
+				const res = await fetch(`/api/posts/${post._id}`, {
 					method: "DELETE",
 					credentials: "include"
 				});
@@ -48,7 +48,7 @@ const Post = ({post}) => {
 	const { mutateAsync: likePost, isPending: isLiking } = useMutation({
 		mutationFn: async () => {
 			try {
-				const res = await fetch(`http://localhost:3500/posts/like/${post._id}`, {
+				const res = await fetch(`/api/posts/like/${post._id}`, {
 					method: "POST",
 					credentials: "include"
 				});
@@ -81,7 +81,7 @@ const Post = ({post}) => {
 	const { mutateAsync: retweetPost, isPending: isRetweeting } = useMutation({
 		mutationFn: async () => {
 			try {
-				const res = await fetch(`http://localhost:3500/posts/retweet/${post._id}`, {
+				const res = await fetch(`/api/posts/retweet/${post._id}`, {
 					method: "POST",
 					credentials: "include"
 				});

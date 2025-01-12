@@ -38,7 +38,7 @@ const ProfilePage = () => {
 		queryKey: ["userProfile"],
 		queryFn: async () => {
 			try {
-				const res = await fetch(`http://localhost:3500/users/profile/${username}`, {
+				const res = await fetch(`/api/users/profile/${username}`, {
 					credentials: "include"
 				});
 				const data = await res.json();

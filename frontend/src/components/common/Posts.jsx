@@ -31,7 +31,7 @@ const Posts = ({ feedType, username, userId }) => {
 		queryKey: ["posts"],
 		queryFn: async () => {
 			try {
-				const res = await fetch(`http://localhost:3500${POST_ENDPOINT}`, 
+				const res = await fetch(`/api${POST_ENDPOINT}`, 
 					{
 						method: 'GET',
 						credentials: "include",

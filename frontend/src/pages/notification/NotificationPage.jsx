@@ -30,7 +30,7 @@ const NotificationPage = () => {
 	const { mutate: deleteNotifications } = useMutation({
 		mutationFn: async () => {
 			try {
-				const res = await fetch("http://localhost:3500/notify", {
+				const res = await fetch("/api/notify", {
 					method: "DELETE",
 					credentials: "include"
 				});
