@@ -3,6 +3,7 @@ import express from "express";
 import dotenv from "dotenv"
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import path from "path";
 
 // Custom modules
 import {v2 as cloudinary} from "cloudinary";
@@ -21,7 +22,9 @@ cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_SECRET
-})
+});
+
+const __dirname = path.resolve();
 
 const app = express();
 // parse req.body as json
@@ -46,7 +49,12 @@ app.use("/posts", postRoutes);
 app.use("/notify", notifyRoutes);
 
 
-
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '/frontend/dist')));
+    app.get('*', (req, res) => {
+        res.sendFile(path.resolve(__dirname, 'frontend', 'dist', 'index.html'));
+    })
+}
 
 
 
