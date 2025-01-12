@@ -31,7 +31,7 @@ const app = express();
 app.use(express.json({ limit: '5mb' }));
 // allow cross origin requests
 app.use(cors({
-    origin: 'http://localhost:3000', // Allow only this origin
+    origin: 'https://twitter-clone-azure-five.vercel.app/', // Allow only this origin
     methods: ['GET', 'POST', 'DELETE', 'UPDATE'], // Allow only specific HTTP methods
     credentials: true, // Allow cookies
 }));
