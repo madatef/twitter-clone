@@ -6,7 +6,8 @@ import Notification from "../models/notifyModel.js";
 
 export const getPosts = async (req, res) => {
     try {
-        const posts = await Post.find().sort({createdAt: -1}).populate({path: "user", select: "-password"}).populate({path: "comments.user", select: "-password"});
+        const posts = await Post.find().sort({createdAt: -1}).populate({path: "user", select: "-password"}).populate({path: "comments.user", select: "-password"})
+        .populate({path: "retweetStatus.retweeter", select: "fullname"});
         if (!posts) {
             return res.status(200).json([]);
         }
@@ -78,7 +79,7 @@ export const getUserPosts = async (req, res) => {
         })
         .populate({
             path: "retweetStatus.retweeter",
-            select: "username"
+            select: "fullname"
         });
 
 
@@ -125,7 +126,6 @@ export const getLikedPosts = async (req, res) => {
 
 export const createPost = async (req, res) => {
     try {
-        console.log(req.user);
         const { text } = req.body;
         let { image } = req.body;
         const userId = req.user._id;
@@ -142,7 +142,6 @@ export const createPost = async (req, res) => {
                 upload_preset: "social_media"
             });
             image = uploadedImage.secure_url;
-            console.log(image);
         }
 
         const newPost = {

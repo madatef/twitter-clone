@@ -74,7 +74,7 @@ const Posts = ({ feedType, username, userId }) => {
 								{post.retweetStatus.isRetweet && (
 									<div key={post._id} className='h-6 text-center m-0 pl-6 text-slate-700'>
 										<BiRepost  className="w-6 h-6 m-2 inline-block"/> 
-										{post.retweetStatus.retweeter.username} reposted
+										{post.retweetStatus.retweeter.fullname} reposted
 									</div>
 								)}
 							</div>
